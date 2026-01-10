@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://ciaywd0fhkg8l"]
 
-[ext_resource type="Script" uid="uid://bolamiiirgutx" path="res://addons/GenkiDraggable/input_controller.gd" id="1_n431x"]
+[ext_resource type="Script" uid="uid://bolamiiirgutx" path="res://addons/genki-draggable/input_controller.gd" id="1_n431x"]
 
 [node name="InputController" type="Node" node_paths=PackedStringArray("drag_plane_gizmo")]
 script = ExtResource("1_n431x")
