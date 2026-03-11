@@ -135,7 +135,7 @@ func click (draggable: Draggable) -> void:
 func mouse_to_world_position (mouse_position: Vector2) -> Vector3:
 	var camera = get_viewport().get_camera_3d()
 	if not camera:
-		Debug.log_error("There is no 3D camera in the scene. Function 'mouse_to_world_position' needs one.")
+		push_error("There is no 3D camera in the scene. Function 'mouse_to_world_position' needs one.")
 		return Vector3.ZERO
 	# Default to horizontal plane if no custom plane is defined
 	if not plane:
@@ -145,5 +145,5 @@ func mouse_to_world_position (mouse_position: Vector2) -> Vector3:
 	var point = plane.intersects_ray(ray_origin, ray_dir)
 	if point:
 		return point
-	Debug.log_warning("No intersection found with the drag plane (%s)." % str(plane))
+	push_warning("No intersection found with the drag plane (%s)." % str(plane))
 	return Vector3.ZERO
