@@ -1,4 +1,5 @@
 @tool
+## Central controller for handling mouse interactions with Draggable objects and projecting 2D input into the 3D world.
 extends Node
 
 ## Gizmo to initialize the drag plane (origin is global_position and normal is basis Y)
@@ -31,14 +32,17 @@ var _click_status: ClickStatus
 var is_dragging: bool = false
 
 
+## Initializes the drag plane using the provided gizmo.
 func _ready ():
 	if drag_plane_gizmo:
 		plane = Plane(drag_plane_gizmo.basis.y, drag_plane_gizmo.global_position)
 
 
+## Main input handler for managing mouse motion, clicks, and drag transitions.
 func _input (event: InputEvent) -> void:
 	if event is InputEventMouse:
 		input_info = event
+		# Handle mouse movement for dragging or determining if a click should become a drag
 		if event is InputEventMouseMotion:
 			if is_dragging:
 				drag(_draggable)
@@ -51,6 +55,7 @@ func _input (event: InputEvent) -> void:
 					)
 			):
 				begin_drag(_hover)
+		# Handle button presses and releases to distinguish between clicks and drag completion
 		elif event is InputEventMouseButton:
 			if event.button_index != MOUSE_BUTTON_LEFT:
 				return
@@ -68,6 +73,7 @@ func _input (event: InputEvent) -> void:
 				_click_status = ClickStatus.NOTHING
 
 
+## Registers a Draggable object as being currently hovered by the mouse.
 func register_mouse_enter_in_draggable (draggable: Draggable) -> bool:
 	if is_dragging:
 		return false
@@ -76,6 +82,7 @@ func register_mouse_enter_in_draggable (draggable: Draggable) -> bool:
 	return true
 
 
+## Unregisters a Draggable object when the mouse leaves its area.
 func register_mouse_exit_in_draggable (draggable: Draggable) -> bool:
 	if is_dragging:
 		return false
@@ -85,8 +92,10 @@ func register_mouse_exit_in_draggable (draggable: Draggable) -> bool:
 	return true
 
 
+## Initiates a drag operation for the specified Draggable object.
 func begin_drag (draggable: Draggable) -> void:
 	is_dragging = true
+	# Handle swapping between draggables if another one is already active
 	if _draggable:
 		if _draggable == draggable:
 			return
@@ -98,6 +107,7 @@ func begin_drag (draggable: Draggable) -> void:
 	_draggable = draggable
 
 
+## Updates the state of the current drag operation.
 func drag (draggable: Draggable) -> void:
 	if not is_dragging:
 		return
@@ -105,6 +115,7 @@ func drag (draggable: Draggable) -> void:
 	on_dragged.emit(draggable, input_info)
 
 
+## Concludes the current drag operation.
 func end_drag (draggable: Draggable) -> void:
 	if not is_dragging:
 		return
@@ -114,16 +125,19 @@ func end_drag (draggable: Draggable) -> void:
 	on_drag_ended.emit(draggable, input_info)
 
 
+## Triggers a click event on the specified Draggable object.
 func click (draggable: Draggable) -> void:
 	on_clicked.emit(draggable, input_info)
 	draggable._before_click(input_info.position)
 
 
+## Projects a 2D mouse position into a 3D world position via ray-plane intersection.
 func mouse_to_world_position (mouse_position: Vector2) -> Vector3:
 	var camera = get_viewport().get_camera_3d()
 	if not camera:
 		Debug.log_error("There is no 3D camera in the scene. Function 'mouse_to_world_position' needs one.")
 		return Vector3.ZERO
+	# Default to horizontal plane if no custom plane is defined
 	if not plane:
 		plane = Plane(camera.basis.z, Vector3.ZERO)
 	var ray_origin = camera.project_ray_origin(mouse_position)

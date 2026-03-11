@@ -1,4 +1,5 @@
 class_name Draggable
+## Base class for 3D objects that can be hovered, dragged, and clicked. Handles raycast-based movement.
 extends Area3D
 
 signal on_drag_began (mouse_position: Vector2)
@@ -39,7 +40,8 @@ var global_offset: Vector3:
 	get: return (to_global(drag_offset) - to_global(Vector3.ZERO))
 
 
-func _ready() -> void:
+## Initializes connections and sets the root node for movement.
+func _ready () -> void:
 	mouse_entered.connect(_handle_mouse_entered)
 	mouse_exited.connect(_handle_mouse_exited)
 	get_tree().process_frame.connect(_handle_process)
@@ -48,6 +50,7 @@ func _ready() -> void:
 	input_capture_on_drag = true
 
 
+## Internal handler for mouse entry; registers with the InputController.
 func _handle_mouse_entered ():
 	_is_hovering = true
 	if not InputController.register_mouse_enter_in_draggable(self):
@@ -58,6 +61,7 @@ func _handle_mouse_entered ():
 	_hover_entered()
 
 
+## Internal handler for mouse exit; unregisters from the InputController.
 func _handle_mouse_exited ():
 	_is_hovering = false
 	if not InputController.register_mouse_exit_in_draggable(self):
@@ -68,16 +72,20 @@ func _handle_mouse_exited ():
 	_hover_exited()
 
 
+## Main processing loop for applying movement updates during drag.
 func _handle_process ():
 	if not _is_being_dragged or not draggable:
 		return
 	if translate_on_drag:
+		# Apply target position directly if lerp is complete
 		if is_equal_approx(_begin_drag_lerp, 1.0):
 			root.global_position = _target_position
 		elif not use_offset:
+			# Apply smoothed transition during initial drag phase
 			root.global_position = _drag_origin.lerp(_target_position, _begin_drag_lerp)
 
 
+## Internal setup called by InputController before starting a drag operation.
 func _before_begin_drag (mouse_position: Vector2):
 	if not draggable or _is_being_dragged:
 		return
@@ -85,10 +93,12 @@ func _before_begin_drag (mouse_position: Vector2):
 	on_drag_began.emit(mouse_position)
 	var point = InputController.mouse_to_world_position(mouse_position)
 	_target_position = point + _offset + global_offset
+	# Decide whether to snap to pivot or maintain relative offset
 	if not drag_from_pivot:
 		_offset = root.global_position - point
 	_begin_drag_lerp = 0.0
 	_drag_origin = root.global_position
+	# Start smoothing tween if not using offset mode
 	if translate_on_drag and not use_offset:
 		var tween = create_tween()
 		tween.set_ease(Tween.EASE_OUT)
@@ -96,12 +106,14 @@ func _before_begin_drag (mouse_position: Vector2):
 	_begin_drag(mouse_position)
 
 
+## Internal update called by InputController during an ongoing drag.
 func _before_drag (mouse_position: Vector2):
 	if not draggable or not _is_being_dragged:
 		return
 	on_dragged.emit(mouse_position)
 	var point = InputController.mouse_to_world_position(mouse_position)
 	_target_position = point + _offset + global_offset
+	# Continuous smoothing calculation if in offset mode
 	if use_offset and not is_equal_approx(_begin_drag_lerp, 1.0):
 		_begin_drag_lerp = clamp(_begin_drag_lerp + begin_drag_speed * get_process_delta_time(), 0.0, 1.0)
 		if translate_on_drag:
@@ -109,6 +121,7 @@ func _before_drag (mouse_position: Vector2):
 	_drag(mouse_position)
 
 
+## Internal cleanup called by InputController when a drag ends.
 func _before_end_drag (mouse_position: Vector2):
 	if not draggable:
 		return
@@ -117,6 +130,7 @@ func _before_end_drag (mouse_position: Vector2):
 	_end_drag(mouse_position)
 
 
+## Internal logic called by InputController when a click is detected.
 func _before_click (mouse_position: Vector2):
 	if not clickable:
 		return
@@ -124,25 +138,26 @@ func _before_click (mouse_position: Vector2):
 	_click(mouse_position)
 
 
+## Virtual callback for hover entry.
 func _hover_entered ():
 	pass
 
-
+## Virtual callback for hover exit.
 func _hover_exited ():
 	pass
 
-
+## Virtual callback for starting a drag operation.
 func _begin_drag (_mouse_position: Vector2):
 	pass
 
-
+## Virtual callback for during a drag operation.
 func _drag (_mouse_position: Vector2):
 	pass
 
-
+## Virtual callback for ending a drag operation.
 func _end_drag (_mouse_position: Vector2):
 	pass
 
-
+## Virtual callback for a click event.
 func _click (_mouse_position: Vector2):
 	pass
