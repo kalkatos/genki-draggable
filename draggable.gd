@@ -48,8 +48,6 @@ func _ready () -> void:
 	if !root:
 		root = self
 	input_capture_on_drag = true
-	if not Engine.has_singleton("InputController"):
-		push_error("InputController singleton is required for Draggable to function properly.")
 
 
 ## Internal handler for mouse entry; registers with the InputController.
