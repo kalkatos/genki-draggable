@@ -94,6 +94,8 @@ func register_mouse_exit_in_draggable (draggable: Draggable) -> bool:
 
 ## Initiates a drag operation for the specified Draggable object.
 func begin_drag (draggable: Draggable) -> void:
+	if not draggable or not draggable.draggable:
+		return
 	is_dragging = true
 	# Handle swapping between draggables if another one is already active
 	if _draggable:
